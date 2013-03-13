@@ -1,0 +1,21 @@
+<head>
+  <title>rooms</title>
+</head>
+
+<body>
+  {{> hello}}
+</body>
+
+<template name="hello">
+  <h1>Hello World!</h1>
+  {{greeting}}
+  <input id="switch" type="button" value="Switch Room" />
+
+  <br />
+
+  <h2>Room: {{room}}</h2>
+  <h2>Count: {{count}}</h2>
+
+  <input id="add" type="button" value="Add Message" />
+  <input id="remove" type="button" value="Remove Message" />
+</template>
