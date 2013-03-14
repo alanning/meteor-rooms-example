@@ -100,6 +100,59 @@ if (Meteor.isServer) {
     });
   });
 
+
+
+  // server: publish total number of messages
+  Meteor.publish("total-message-count", function () {
+    var self = this;
+    var count = 0;
+    var totalCountId = "total";
+    var initializing = true;
+
+    console.log('client connected')
+
+    var handle = Messages.find().observeChanges({
+      added: function (id) {
+        var msg
+
+        count++;
+        msg = 'added msg. total message count: ' + count;
+
+        if (initializing) {
+          msg = 'init - ' + msg;
+        }
+
+        console.log(msg);
+
+        if (!initializing)
+          self.changed("counts", totalCountId, {count: count});
+      },
+      removed: function (id) {
+        count--;
+        console.log('removed msg. total message count: ' + count);
+        self.changed("counts", totalCountId, {count: count});
+      }
+      // don't care about moved or changed
+    });
+
+    // Observe only returns after the initial added callbacks have
+    // run.  Now return an initial value and mark the subscription
+    // as ready.
+    initializing = false;
+    self.added("counts", totalCountId, {count: count});
+    self.ready();
+
+    console.log('total-message-count publish ready')
+
+    // Stop observing the cursor when client unsubs.
+    // Stopping a subscription automatically takes
+    // care of sending the client any removed messages.
+    self.onStop(function () {
+      handle.stop();
+    });
+  });
+
+
 }  // end server
 
 
@@ -116,6 +169,7 @@ if (Meteor.isClient) {
   // client: subscribe to the count for the current room
   Meteor.autorun(function () {
     Meteor.subscribe("counts-by-room", Session.get("roomId"));
+    Meteor.subscribe("total-message-count")
   });
 
   // client: use the new collection
@@ -131,6 +185,17 @@ if (Meteor.isClient) {
         countObj = Counts.findOne({_id: roomId});
 
     console.log('count template helper executed. roomId ' + roomId);
+    console.log(countObj);
+
+    if (countObj) {
+      return countObj.count;
+    }
+  };
+  Template.hello.total_count = function () {
+    var totalCountId = "total",
+        countObj = Counts.findOne({_id: totalCountId});
+
+    console.log('total_count template helper executed')
     console.log(countObj);
 
     if (countObj) {
